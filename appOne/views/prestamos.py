@@ -18,23 +18,26 @@ from .utils import es_administrador, registrar_auditoria
 @login_required
 def modal_prestamo(request, id):
     dispositivo = get_object_or_404(Dispositivo, id=id)
-    fecha_str = request.GET.get('fecha_uso', timezone.now().date().strftime('%Y-%m-%d'))
+    fecha_str = request.GET.get('fecha_uso', '').strip()
     
-    try:
-        fecha_dt = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-    except ValueError:
-        fecha_dt = timezone.now().date()
-        fecha_str = fecha_dt.strftime('%Y-%m-%d')
+    fecha_dt = None
+    if fecha_str:
+        try:
+            fecha_dt = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_str = ''
 
-    reservas = Prestamo.objects.filter(
-        dispositivo=dispositivo,
-        fecha_uso=fecha_dt,
-        estado__in=[Prestamo.ESTADO_PENDIENTE, Prestamo.ESTADO_APROBADO]
-    ).select_related('usuario').order_by('hora_inicio')
+    reservas = Prestamo.objects.none()
+    if fecha_dt:
+        reservas = Prestamo.objects.filter(
+            dispositivo=dispositivo,
+            fecha_uso=fecha_dt,
+            estado__in=[Prestamo.ESTADO_PENDIENTE, Prestamo.ESTADO_APROBADO]
+        ).select_related('usuario').order_by('hora_inicio')
 
     horarios_tabla = []
     
-    for h in range(8, 17):
+    for h in range(8, 17) if fecha_dt else []:
         h_inicio = time(h, 0)
         h_fin = time(h + 1, 0)
         
