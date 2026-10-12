@@ -10,12 +10,87 @@
   <header class="act-header"><div><span class="act-kicker">GESTIÓN INSTITUCIONAL</span><h1>Actividades universitarias</h1><p>Planifica eventos dentro y fuera del campus, fechas y equipos necesarios.</p></div>{% if puede_editar %}<a class="act-btn act-btn-primary" href="#actividad-form"><i class="ri-add-line"></i> Nueva actividad</a>{% endif %}</header>
   <div class="act-tabs"><a class="{% if not tipo_actual %}selected{% endif %}" href="{% url 'actividades' %}">Todas</a><a class="{% if tipo_actual == 'interna' %}selected{% endif %}" href="?tipo=interna">Dentro de la universidad</a><a class="{% if tipo_actual == 'externa' %}selected{% endif %}" href="?tipo=externa">Fuera de la universidad</a></div>
   <div class="act-layout"><div class="act-panel"><div class="act-panel-head"><h2><i class="ri-calendar-2-line"></i> Calendario de actividades</h2><span class="act-legend"><b></b> Interna &nbsp; <b class="blue"></b> Externa</span></div><div id="calendario-actividades"></div></div>
-  {% if puede_editar %}<div class="act-panel" id="actividad-form"><div class="act-panel-head"><h2>{% if editar %}Editar actividad{% else %}Programar actividad{% endif %}</h2></div><form method="post" class="act-form">{% csrf_token %}{% if editar %}<input type="hidden" name="actividad_id" value="{{ editar.pk }}">{% endif %}{% for field in form %}<div class="act-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == 'equipos' %}<small>Ctrl + clic para seleccionar varios equipos. Esta planificación no reserva automáticamente los dispositivos.</small>{% endif %}{% for error in field.errors %}<small class="act-error">{{ error }}</small>{% endfor %}</div>{% endfor %}{% for error in form.non_field_errors %}<p class="act-error">{{ error }}</p>{% endfor %}<button class="act-btn act-btn-primary" type="submit">Guardar actividad</button>{% if editar %}<a class="act-btn act-btn-ghost" href="{% url 'actividades' %}">Cancelar edición</a>{% endif %}</form></div>{% endif %}</div>
+  {% if puede_editar %}<div class="act-panel" id="actividad-form"><div class="act-panel-head"><h2>{% if editar %}Editar actividad{% else %}Programar actividad{% endif %}</h2></div><form method="post" class="act-form">{% csrf_token %}{% if editar %}<input type="hidden" name="actividad_id" value="{{ editar.pk }}">{% endif %}{% for field in form %}<div class="act-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{% if field.name == 'equipos' %}
+  <div class="act-equipment-picker" id="act-equipment-picker">
+    <div class="act-equipment-toolbar"><div class="act-equipment-search"><i class="ri-search-line"></i><input id="act-equipment-search" type="search" autocomplete="off" placeholder="Buscar equipo, código o marca..." aria-label="Buscar equipos"></div><span id="act-equipment-counter" class="act-equipment-counter" aria-live="polite">0 seleccionados</span></div>
+    <div class="act-equipment-selected" id="act-equipment-selected" aria-live="polite"><span class="act-equipment-empty">Aún no hay equipos seleccionados</span></div>
+    <div class="act-equipment-grid" id="act-equipment-grid" role="group" aria-label="Equipos disponibles"></div>
+    <div id="act-equipment-no-results" class="act-equipment-no-results" hidden>No encontramos equipos con esa búsqueda.</div>
+    <div class="act-equipment-native">{{ field }}</div>
+    <small>Haz clic en los equipos para agregarlos o quitarlos. La selección solo planifica el uso; no genera préstamos automáticos.</small>
+  </div>
+{% else %}{{ field }}{% endif %}{% for error in field.errors %}<small class="act-error">{{ error }}</small>{% endfor %}</div>{% endfor %}{% for error in form.non_field_errors %}<p class="act-error">{{ error }}</p>{% endfor %}<button class="act-btn act-btn-primary" type="submit">Guardar actividad</button>{% if editar %}<a class="act-btn act-btn-ghost" href="{% url 'actividades' %}">Cancelar edición</a>{% endif %}</form></div>{% endif %}</div>
   <div class="act-panel act-list"><div class="act-panel-head"><h2>Actividades registradas</h2><span>{{ actividades|length }} actividades</span></div><div class="act-table-scroll"><table><thead><tr><th>Actividad</th><th>Tipo / lugar</th><th>Fecha y horario</th><th>Equipos necesarios</th><th>Responsable</th><th>Estado</th>{% if puede_editar %}<th>Acciones</th>{% endif %}</tr></thead><tbody>{% for a in actividades %}<tr><td><strong>{{ a.titulo }}</strong><small>{{ a.descripcion|truncatechars:90 }}</small></td><td>{{ a.get_tipo_display }}<small>{{ a.lugar }}</small></td><td>{{ a.inicio|date:"d/m/Y H:i" }}<small>Hasta {{ a.fin|date:"d/m/Y H:i" }}</small></td><td>{% for d in a.equipos.all %}<span class="act-device">{{ d.nombre_dispositivo }}</span>{% empty %}<span class="act-muted">Sin equipos</span>{% endfor %}</td><td>{{ a.responsable }}</td><td><span class="act-status">{{ a.get_estado_display }}</span></td>{% if puede_editar %}<td><a class="act-action" href="?editar={{ a.pk }}#actividad-form">Editar</a><form method="post" action="{% url 'eliminar_actividad' a.pk %}" onsubmit="return confirm('¿Eliminar esta actividad?');">{% csrf_token %}<button class="act-action danger" type="submit">Eliminar</button></form></td>{% endif %}</tr>{% empty %}<tr><td colspan="7" class="act-empty">Todavía no hay actividades programadas.</td></tr>{% endfor %}</tbody></table></div></div>
 </section>
 {% endblock %}
 {% block extra_js %}<script>
 document.addEventListener('DOMContentLoaded', function () {
+  const picker = document.getElementById('act-equipment-picker');
+  if (picker) {
+    const select = picker.querySelector('select[multiple]');
+    const grid = document.getElementById('act-equipment-grid');
+    const search = document.getElementById('act-equipment-search');
+    const chosen = document.getElementById('act-equipment-selected');
+    const counter = document.getElementById('act-equipment-counter');
+    const noResults = document.getElementById('act-equipment-no-results');
+    if (select) {
+      const options = Array.from(select.options).filter(o => o.value);
+      function render() {
+        const query = search.value.trim().toLocaleLowerCase('es');
+        grid.replaceChildren();
+        chosen.replaceChildren();
+        let visible = 0, selected = 0;
+        options.forEach((option) => {
+          if (option.selected) {
+            selected++;
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'act-equipment-chip';
+            chip.setAttribute('aria-label', 'Quitar ' + option.textContent);
+            const name = document.createElement('span');
+            name.textContent = option.textContent;
+            const x = document.createElement('i');
+            x.className = 'ri-close-line';
+            x.setAttribute('aria-hidden', 'true');
+            chip.append(name, x);
+            chip.addEventListener('click', () => { option.selected = false; render(); });
+            chosen.appendChild(chip);
+          }
+          if (!option.textContent.toLocaleLowerCase('es').includes(query)) return;
+          visible++;
+          const tile = document.createElement('button');
+          tile.type = 'button';
+          tile.className = 'act-equipment-tile' + (option.selected ? ' is-selected' : '');
+          tile.setAttribute('aria-pressed', option.selected ? 'true' : 'false');
+          const symbol = document.createElement('span');
+          symbol.className = 'act-equipment-symbol';
+          const icon = document.createElement('i');
+          icon.className = 'ri-computer-line';
+          icon.setAttribute('aria-hidden', 'true');
+          symbol.appendChild(icon);
+          const label = document.createElement('span');
+          label.className = 'act-equipment-name';
+          label.textContent = option.textContent;
+          const check = document.createElement('i');
+          check.className = option.selected ? 'ri-checkbox-circle-fill' : 'ri-add-circle-line';
+          check.setAttribute('aria-hidden', 'true');
+          tile.append(symbol, label, check);
+          tile.addEventListener('click', () => { option.selected = !option.selected; render(); });
+          grid.appendChild(tile);
+        });
+        if (!selected) {
+          const empty = document.createElement('span');
+          empty.className = 'act-equipment-empty';
+          empty.textContent = 'Aún no hay equipos seleccionados';
+          chosen.appendChild(empty);
+        }
+        counter.textContent = selected + (selected === 1 ? ' seleccionado' : ' seleccionados');
+        noResults.hidden = visible !== 0;
+      }
+      search.addEventListener('input', render);
+      render();
+    }
+  }
   const nodo = document.getElementById('calendario-actividades');
   if (!nodo || !window.FullCalendar) return;
   const calendar = new FullCalendar.Calendar(nodo, {
