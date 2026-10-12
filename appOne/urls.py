@@ -23,6 +23,13 @@ urlpatterns = [
     path('api/reservas-eventos/', views.api_reservas_eventos, name='api_reservas_eventos'),
 
     # =========================
+    # ACTIVIDADES UNIVERSITARIAS
+    # =========================
+    path('actividades/', views.actividades, name='actividades'),
+    path('actividades/eventos/', views.api_actividades, name='api_actividades'),
+    path('actividades/eliminar/<int:pk>/', views.eliminar_actividad, name='eliminar_actividad'),
+
+    # =========================
     # PANEL ADMIN & AUDITORÍA
     # =========================
     path('panel/usuarios/', views.panel_usuarios, name='panel_usuarios'),
