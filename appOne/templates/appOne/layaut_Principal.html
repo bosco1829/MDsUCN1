@@ -199,10 +199,22 @@
                 dayMaxEvents: true,
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
-                    let msg = `Dispositivo: ${props.dispositivo || info.event.title}\n`;
-                    if (props.usuario) msg += `Usuario: ${props.usuario}\n`;
-                    msg += `Estado: ${props.estado || 'N/A'}`;
-                    alert(msg);
+                    const details = [
+                        'Equipo: ' + (props.dispositivo || info.event.title),
+                        'Código de inventario: ' + (props.codigo_inventario || '—'),
+                        'Marca: ' + (props.marca || '—'),
+                        'Solicitante: ' + (props.usuario || '—'),
+                        props.correo ? 'Correo: ' + props.correo : '',
+                        props.codigo_usuario ? 'Código de usuario: ' + props.codigo_usuario : '',
+                        'Estado: ' + (props.estado || '—'),
+                        'Fecha solicitada de uso: ' + (props.fecha_uso || '—'),
+                        'Horario: ' + (props.hora_inicio || '—') + ' a ' + (props.hora_entrega || '—'),
+                        'Motivo: ' + (props.motivo || '—'),
+                        'Solicitud registrada: ' + (props.fecha_solicitud || '—'),
+                        props.fecha_devolucion_real ? 'Devolución: ' + props.fecha_devolucion_real : '',
+                        props.observaciones_devolucion ? 'Observaciones: ' + props.observaciones_devolucion : ''
+                    ].filter(Boolean);
+                    alert(details.join('\\n'));
                 }
             });
             calendar.render();
