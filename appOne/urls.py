@@ -30,6 +30,12 @@ urlpatterns = [
     path('actividades/eliminar/<int:pk>/', views.eliminar_actividad, name='eliminar_actividad'),
 
     # =========================
+    # CONTRASEÑAS
+    # =========================
+    path('mi-contrasena/', views.cambiar_mi_contrasena, name='cambiar_mi_contrasena'),
+    path('panel/usuarios/<int:id>/contrasena/', views.admin_cambiar_contrasena, name='admin_cambiar_contrasena'),
+
+    # =========================
     # PANEL ADMIN & AUDITORÍA
     # =========================
     path('panel/usuarios/', views.panel_usuarios, name='panel_usuarios'),
