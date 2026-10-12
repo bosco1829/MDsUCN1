@@ -464,3 +464,8 @@
     grid-template-columns: 1fr;
   }
 }
+/* Las tarjetas estadísticas son enlaces accesibles al módulo correspondiente. */
+.stat-card-link { color: inherit; text-decoration: none; cursor: pointer; }
+.stat-card-link:visited { color: inherit; }
+.stat-card-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.stat-card-link:hover { text-decoration: none; }
