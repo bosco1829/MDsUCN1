@@ -469,3 +469,25 @@
 .stat-card-link:visited { color: inherit; }
 .stat-card-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .stat-card-link:hover { text-decoration: none; }
+
+/* Corrige estilos globales de enlaces dentro de las tarjetas del dashboard. */
+.stats-grid a.stat-card-link,
+.stats-grid a.stat-card-link:link,
+.stats-grid a.stat-card-link:visited,
+.stats-grid a.stat-card-link:hover,
+.stats-grid a.stat-card-link:active,
+.stats-grid a.stat-card-link *,
+.stats-grid a.stat-card-link:hover * {
+  text-decoration: none !important;
+  color: inherit;
+}
+.stats-grid a.stat-card-link { cursor: pointer; }
+.stats-grid a.stat-card-link .stat-info h3 { color: var(--text-secondary); }
+.stats-grid a.stat-card-link .stat-value { color: var(--text-main); }
+.stats-grid a.stat-card-link .stat-trend { color: var(--text-muted); }
+.stats-grid a.stat-card-link:hover {
+  border-color: #a7dfbe;
+  box-shadow: 0 14px 28px rgba(1, 94, 51, .11);
+  transform: translateY(-3px);
+}
+.stats-grid a.stat-card-link:focus-visible { outline: 3px solid #059669; outline-offset: 3px; }
