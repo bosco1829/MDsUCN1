@@ -94,6 +94,9 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% if not fecha_seleccionada %}
+                            <tr><td colspan="3" style="padding:20px;text-align:center;color:#64748b;font-weight:600;">📅 Selecciona primero una fecha para consultar los horarios disponibles.</td></tr>
+                            {% else %}
                             {% for slot in horarios_tabla %}
                             <tr style="border-bottom: 1px solid #edf2f7;">
                                 <td style="padding: 8px 12px;"><strong>{{ slot.rango }}</strong></td>
@@ -123,6 +126,7 @@
                                     de horarios disponibles.</td>
                             </tr>
                             {% endfor %}
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -134,13 +138,17 @@
 
                 <input type="hidden" name="dispositivo_id" value="{{ dispositivo.id }}">
 
+                <p id="avisoFechaPrestamo" style="color:#64748b;font-size:.87rem;margin:0 0 14px;" {% if fecha_seleccionada %}hidden{% endif %}>
+                    <i class="fa-solid fa-calendar-day"></i> Primero selecciona la fecha de uso. Después podrás completar el motivo y los horarios.
+                </p>
+
                 <!-- MOTIVO -->
                 <div class="grupo" style="margin-bottom: 15px;">
                     <label for="motivo" style="display: block; margin-bottom: 5px; font-weight: 600;">Motivo del
                         préstamo <span style="color:red;">*</span></label>
                     <textarea id="motivo" name="motivo" rows="2" placeholder="Explique el motivo del préstamo..."
                         style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;"
-                        required></textarea>
+                        required {% if not fecha_seleccionada %}disabled{% endif %}></textarea>
                 </div>
 
                 <!-- FECHA Y HORAS -->
@@ -156,14 +164,14 @@
                         <label for="hora_inicio" style="display: block; margin-bottom: 5px; font-weight: 600;">Hora
                             inicio <span style="color:red;">*</span></label>
                         <input type="time" id="hora_inicio" name="hora_inicio" min="08:00" max="17:00"
-                            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;" required>
+                            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;" required {% if not fecha_seleccionada %}disabled{% endif %}>
                     </div>
 
                     <div class="grupo" style="flex: 1;">
                         <label for="hora_entrega" style="display: block; margin-bottom: 5px; font-weight: 600;">Hora
                             entrega <span style="color:red;">*</span></label>
                         <input type="time" id="hora_entrega" name="hora_entrega" min="08:00" max="17:00"
-                            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;" required>
+                            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;" required {% if not fecha_seleccionada %}disabled{% endif %}>
                     </div>
                 </div>
 
@@ -177,7 +185,7 @@
                     <button type="button" class="btn-cancelar" onclick="cerrarModalPrestamo()">
                         Cancelar
                     </button>
-                    <button type="submit" class="btn-guardar">
+                    <button type="submit" class="btn-guardar" {% if not fecha_seleccionada %}disabled title="Selecciona primero una fecha"{% endif %}>
                         Enviar solicitud
                     </button>
                 </div>
@@ -208,19 +216,37 @@
 
     (function () {
         const fechaInput = document.getElementById('fecha_uso');
-        if (fechaInput && !fechaInput.value) {
-            const hoy = new Date().toISOString().split('T')[0];
-            fechaInput.value = hoy;
-            fechaInput.setAttribute('min', hoy);
+        const filtroModal = document.getElementById('filtro_fecha_modal');
+        const motivoInput = document.getElementById('motivo');
+        const horaInicio = document.getElementById('hora_inicio');
+        const horaEntrega = document.getElementById('hora_entrega');
+        const botonEnviar = document.querySelector('#formCrearPrestamo button[type="submit"]');
+        const avisoFecha = document.getElementById('avisoFechaPrestamo');
+
+        function aplicarFechaSeleccionada(fecha) {
+            const habilitado = Boolean(fecha);
+            [motivoInput, horaInicio, horaEntrega, botonEnviar].forEach(el => {
+                if (el) el.disabled = !habilitado;
+            });
+            if (avisoFecha) avisoFecha.hidden = habilitado;
         }
 
+        aplicarFechaSeleccionada(fechaInput ? fechaInput.value : '');
         if (fechaInput) {
             fechaInput.addEventListener('change', function () {
-                const filtroModal = document.getElementById('filtro_fecha_modal');
-                if (filtroModal) {
-                    filtroModal.value = this.value;
-                }
+                aplicarFechaSeleccionada(this.value);
+                if (filtroModal) filtroModal.value = this.value;
+                if (motivoInput) motivoInput.value = '';
+                if (horaInicio) horaInicio.value = '';
+                if (horaEntrega) horaEntrega.value = '';
                 actualizarHorariosModal(this.value, '{{ dispositivo.id }}');
+            });
+        }
+
+        if (filtroModal) {
+            filtroModal.addEventListener('change', function () {
+                if (fechaInput) fechaInput.value = this.value;
+                aplicarFechaSeleccionada(this.value);
             });
         }
 
@@ -230,6 +256,10 @@
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
                 ocultarAlertaModal();
+                if (!fechaInput || !fechaInput.value) {
+                    mostrarAlertaModal('Primero selecciona una fecha de uso para continuar.');
+                    return;
+                }
 
                 const formData = new FormData(form);
 
