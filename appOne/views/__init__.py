@@ -12,3 +12,4 @@ from .configuracion import panel_config, config_inicio, config_database, config_
 from .auditoria import bitacora_auditoria
 from .reportes import reportes
 from .calendario import calendario_reservas, api_reservas_eventos
+from .actividades import actividades, api_actividades, eliminar_actividad
