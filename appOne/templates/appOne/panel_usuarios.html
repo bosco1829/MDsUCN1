@@ -57,7 +57,7 @@
                     <i class="ri-filter-line"></i> Filtrar
                 </button>
                 {% if request.GET.buscar or request.GET.rol or request.GET.estado %}
-                <a href="{% url 'gestion_usuarios' %}" class="btn-limpiar" title="Limpiar filtros">
+                <a href="{% url 'panel_usuarios' %}" class="btn-limpiar" title="Limpiar filtros">
                     <i class="ri-refresh-line"></i>
                 </a>
                 {% endif %}
@@ -122,6 +122,10 @@
 
                         <a href="{% url 'rechazar_usuario' u.id %}" class="btn warning" data-tooltip="Rechazar">
                             <i class="ri-close-line"></i>
+                        </a>
+
+                        <a href="{% url 'admin_cambiar_contrasena' u.id %}" class="btn info" data-tooltip="Cambiar contraseña" title="Restablecer contraseña">
+                            <i class="ri-lock-password-line"></i>
                         </a>
 
                         <a href="{% url 'eliminar_usuario' u.id %}"
