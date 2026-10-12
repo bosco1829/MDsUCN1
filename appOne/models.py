@@ -287,3 +287,34 @@ class BitacoraAuditoria(models.Model):
     def __str__(self):
         usr = self.usuario.username if self.usuario else "Sistema"
         return f"{self.fecha_hora.strftime('%Y-%m-%d %H:%M:%S')} - {usr} - {self.accion} ({self.tabla_afectada})"
+
+# ============================
+#    ACTIVIDADES UNIVERSITARIAS
+# ============================
+class Actividad(models.Model):
+    TIPOS = [('interna', 'Dentro de la universidad'), ('externa', 'Fuera de la universidad')]
+    ESTADOS = [('planificada', 'Planificada'), ('en_curso', 'En curso'), ('finalizada', 'Finalizada'), ('cancelada', 'Cancelada')]
+    titulo = models.CharField(max_length=180)
+    descripcion = models.TextField(blank=True)
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+    lugar = models.CharField(max_length=200)
+    responsable = models.CharField(max_length=150)
+    inicio = models.DateTimeField(db_index=True)
+    fin = models.DateTimeField(db_index=True)
+    estado = models.CharField(max_length=12, choices=ESTADOS, default='planificada')
+    equipos = models.ManyToManyField('Dispositivo', blank=True, related_name='actividades')
+    creado_por = models.ForeignKey('Usuario', null=True, on_delete=models.SET_NULL, related_name='actividades_creadas')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['inicio']
+        verbose_name = 'Actividad universitaria'
+        verbose_name_plural = 'Actividades universitarias'
+
+    def clean(self):
+        super().clean()
+        if self.inicio and self.fin and self.fin <= self.inicio:
+            raise ValidationError({'fin': 'La finalización debe ser posterior al inicio.'})
+
+    def __str__(self):
+        return self.titulo
