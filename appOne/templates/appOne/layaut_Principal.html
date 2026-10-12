@@ -1,0 +1,209 @@
+{% extends "appOne/dashboard.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'appOne/css/layaut_Principal.css' %}">
+<!-- CDN de FullCalendar v6 -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+{% endblock %}
+
+{% block contenido %}
+<div class="dashboard-wrapper">
+
+    <!-- WELCOME BANNER -->
+    <header class="welcome-banner">
+        <div class="welcome-text">
+            <h2>¡Hola de nuevo, {{ user.get_short_name|default:user.nombre_completo }}! 👋</h2>
+            <p>Aquí tienes un resumen en tiempo real de la gestión de equipos y préstamos.</p>
+        </div>
+        <div class="welcome-badge">
+            <i class="ri-calendar-event-line"></i>
+            <span>{% now "j \d\e F, Y" %}</span>
+        </div>
+    </header>
+
+    <!-- STATS GRID -->
+    <section class="stats-grid">
+        
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="ri-user-3-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Usuarios</h3>
+                <span class="stat-value">{{ estadisticas.usuarios|default:"0" }}</span>
+            </div>
+            <div class="stat-trend neutral">
+                <i class="ri-team-line"></i> Registrados
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="ri-timer-2-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Préstamos Activos</h3>
+                <span class="stat-value">{{ estadisticas.prestamos|default:"0" }}</span>
+            </div>
+            <div class="stat-trend positive">
+                <i class="ri-checkbox-circle-line"></i> En uso
+            </div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon">
+                <i class="ri-computer-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Disponibles</h3>
+                <span class="stat-value">{{ estadisticas.disponibles|default:"0" }}</span>
+            </div>
+            <div class="stat-trend neutral">
+                <i class="ri-cpu-line"></i> En inventario
+            </div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="ri-notification-3-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Pendientes</h3>
+                <span class="stat-value">{{ pendientes_count|default:"0" }}</span>
+            </div>
+            <div class="stat-trend warning">
+                <i class="ri-error-warning-line"></i> Por autorizar
+            </div>
+        </div>
+
+    </section>
+
+    <!-- MAIN CONTENT GRID -->
+    <section class="dashboard-content">
+
+        <!-- GRÁFICO -->
+        <article class="content-card chart-card">
+            <div class="card-header">
+                <div>
+                    <h3>Distribución de Usuarios</h3>
+                    <p class="subtitle">Segmentación por roles actuales</p>
+                </div>
+                <button class="btn-icon" title="Opciones"><i class="ri-more-2-fill"></i></button>
+            </div>
+            <div class="chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </article>
+
+        <!-- TABLA ÚLTIMOS PRÉSTAMOS -->
+        <article class="content-card table-card">
+            <div class="card-header">
+                <div>
+                    <h3>Últimos Préstamos</h3>
+                    <p class="subtitle">Actividad recientemente registrada</p>
+                </div>
+                <a href="{% url 'solicitudes_prestamos' %}" class="btn-link">Ver todos <i class="ri-arrow-right-s-line"></i></a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Dispositivo</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in ultimos_prestamos %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="avatar">{{ p.usuario.nombre_completo|slice:":1"|upper }}</div>
+                                    <span class="font-medium">{{ p.usuario.nombre_completo }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="device-badge">
+                                    <i class="ri-macbook-line"></i> {{ p.dispositivo.nombre_dispositivo }}
+                                </span>
+                            </td>
+                            <td class="text-muted">
+                                {{ p.fecha_uso|date:"d/m/Y" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-state">
+                                    <i class="ri-inbox-archive-line"></i>
+                                    <p>No hay préstamos recientes para mostrar</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+    </section>
+
+    <!-- SECCIÓN DEL CALENDARIO DE RESERVAS -->
+    <section class="calendar-section">
+        <article class="content-card calendar-card">
+            <div class="card-header">
+                <div>
+                    <h3>Calendario de Reservas</h3>
+                    <p class="subtitle">Cronograma de préstamos y solicitudes registradas</p>
+                </div>
+            </div>
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
+        </article>
+    </section>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        if (calendarEl) {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                buttonText: {
+                    today:    'Hoy',
+                    month:    'Mes',
+                    week:     'Semana',
+                    list:     'Agenda'
+                },
+                events: "{% url 'api_reservas_eventos' %}",
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: false
+                },
+                navLinks: true,
+                editable: false,
+                dayMaxEvents: true,
+                eventClick: function(info) {
+                    const props = info.event.extendedProps;
+                    let msg = `Dispositivo: ${props.dispositivo || info.event.title}\n`;
+                    if (props.usuario) msg += `Usuario: ${props.usuario}\n`;
+                    msg += `Estado: ${props.estado || 'N/A'}`;
+                    alert(msg);
+                }
+            });
+            calendar.render();
+        }
+    });
+</script>
+{% endblock %}

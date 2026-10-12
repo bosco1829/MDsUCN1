@@ -1,0 +1,313 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard - MDsUCN{% endblock %}</title>
+
+  <!-- Fuentes & Iconos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- CSS Base -->
+  <link rel="stylesheet" href="{% static 'appOne/css/dashboard.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+  <div class="app-layout">
+
+    <!-- OVERLAY PARA MÓVIL -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <img src="https://uploads.onecompiler.io/43nzu6ce2/43x2n985z/eslogan%20.png" alt="MDsUCN Logo" class="brand-logo">
+          <span class="brand-name">MDsUCN</span>
+        </div>
+        <button class="toggle-sidebar-btn" id="toggleSidebar" aria-label="Toggle Sidebar">
+          <i class="ri-indent-decrease"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">MENÚ PRINCIPAL</div>
+
+        <a href="{% url 'dashboardinicio' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'dashboardinicio' %}active{% endif %}">
+          <i class="ri-dashboard-3-line"></i>
+          <span>Inicio</span>
+        </a>
+
+        <a href="{% url 'listardispositivos' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'listardispositivos' %}active{% endif %}">
+          <i class="ri-computer-line"></i>
+          <span>Dispositivos</span>
+        </a>
+
+        {% if request.user.rol == "Admin" or request.user.is_superuser %}
+        <div class="nav-section-title">ADMINISTRACIÓN</div>
+
+        <a href="{% url 'panel_usuarios' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'panel_usuarios' %}active{% endif %}">
+          <i class="ri-user-settings-line"></i>
+          <span>Usuarios</span>
+        </a>
+
+        <a href="{% url 'solicitudes_prestamos' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'solicitudes_prestamos' %}active{% endif %}">
+          <i class="ri-git-pull-request-line"></i>
+          <span>Solicitudes</span>
+          {% if pendientes_count > 0 %}
+          <span class="nav-badge">{{ pendientes_count }}</span>
+          {% endif %}
+        </a>
+        {% endif %}
+
+        <div class="nav-section-title">SISTEMA</div>
+
+        <a href="{% url 'reportes' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
+          <i class="ri-bar-chart-grouped-line"></i>
+          <span>Reportes</span>
+        </a>
+      </nav>
+
+      <!-- BOTÓN DE CERRAR SESIÓN -->
+      <div class="sidebar-footer">
+        <form method="POST" action="{% url 'logout' %}" style="width: 100%;">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn">
+            <i class="ri-logout-box-r-line"></i>
+            <span>Cerrar Sesión</span>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="main-wrapper">
+
+      <!-- HEADER TOPNAV -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-toggle-btn" id="mobileToggle" aria-label="Abrir menú">
+            <i class="ri-menu-2-line"></i>
+          </button>
+          <div class="page-title">
+            <span>Gestión Institucional</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+
+          <!-- RELOJ NICARAGUA -->
+          <div class="clock-badge">
+            <i class="ri-time-line"></i>
+            <span id="clock-nicaragua">00:00:00</span>
+          </div>
+
+          <!-- NOTIFICACIONES -->
+          <div class="dropdown-wrapper">
+            <button class="icon-btn" id="notifBtn" aria-label="Notificaciones">
+              <i class="ri-notification-3-line"></i>
+              {% if pendientes_count > 0 %}
+              <span class="badge-dot"></span>
+              {% endif %}
+            </button>
+
+            <div class="dropdown-menu notif-dropdown-menu" id="notifDropdown">
+              <div class="dropdown-header">
+                <h4>Notificaciones del Sistema</h4>
+                {% if pendientes_count > 0 %}
+                <span class="count-pill">{{ pendientes_count }}</span>
+                {% endif %}
+              </div>
+
+              <div class="dropdown-body">
+                {% if request.user.rol == "Admin" or request.user.is_superuser %}
+                  {% if prestamos_pendientes_admin %}
+                    <div class="notif-section-title">SOLICITUDES DE EQUIPO</div>
+                    {% for p in prestamos_pendientes_admin %}
+                    <a href="{% url 'solicitudes_prestamos' %}" class="notif-card">
+                      <div class="notif-avatar notif-blue">
+                        <i class="ri-computer-line"></i>
+                      </div>
+                      <div class="notif-info">
+                        <strong>{{ p.usuario.nombre_completo }}</strong>
+                        <p>Solicitó: <b>{{ p.dispositivo.nombre_dispositivo }}</b></p>
+                        <small class="text-muted">{{ p.fecha_solicitud|timesince }}</small>
+                      </div>
+                    </a>
+                    {% endfor %}
+                  {% endif %}
+
+                  {% if usuarios_pendientes_admin %}
+                    <div class="notif-section-title">USUARIOS PENDIENTES</div>
+                    {% for u in usuarios_pendientes_admin %}
+                    <a href="{% url 'panel_usuarios' %}" class="notif-card">
+                      <div class="notif-avatar notif-orange">
+                        <i class="ri-user-received-line"></i>
+                      </div>
+                      <div class="notif-info">
+                        <strong>{{ u.nombre_completo }}</strong>
+                        <p>Solicitó registro como: {{ u.rol }}</p>
+                      </div>
+                    </a>
+                    {% endfor %}
+                  {% endif %}
+
+                  {% if not prestamos_pendientes_admin and not usuarios_pendientes_admin %}
+                  <div class="empty-notif">
+                    <i class="ri-checkbox-circle-line"></i>
+                    <p>Todo al día. Sin actividades pendientes.</p>
+                  </div>
+                  {% endif %}
+
+                {% else %}
+                  {% if prestamos_propios %}
+                    {% for p in prestamos_propios %}
+                    <a href="{% url 'solicitudes_prestamos' %}" class="notif-card">
+                      <div class="notif-avatar">
+                        {% if p.estado == 'pendiente' %}<i class="ri-time-line text-orange"></i>
+                        {% elif p.estado == 'aprobado' %}<i class="ri-checkbox-circle-line text-green"></i>
+                        {% else %}<i class="ri-close-circle-line text-red"></i>{% endif %}
+                      </div>
+                      <div class="notif-info">
+                        <strong>{{ p.dispositivo.nombre_dispositivo }}</strong>
+                        <p>Estado: <b>{{ p.get_estado_display }}</b></p>
+                      </div>
+                    </a>
+                    {% endfor %}
+                  {% else %}
+                  <div class="empty-notif">
+                    <i class="ri-checkbox-circle-line"></i>
+                    <p>No has realizado solicitudes recientemente.</p>
+                  </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- PERFIL USUARIO -->
+          <div class="user-profile">
+            <div class="user-avatar">
+              {% if request.user.nombre_completo %}
+                {{ request.user.nombre_completo|slice:":2"|upper }}
+              {% else %}
+                {{ request.user.correo_institucional|slice:":2"|upper }}
+              {% endif %}
+            </div>
+            <div class="user-meta">
+              <span class="user-name">{{ request.user.nombre_completo|default:request.user.username }}</span>
+              <span class="user-role">{{ request.user.get_rol_display|default:request.user.rol }}</span>
+            </div>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- MENSAJES FLASH -->
+      {% if messages %}
+      <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+          <i class="{% if message.tags == 'error' %}ri-error-warning-line{% else %}ri-checkbox-circle-line{% endif %}"></i>
+          <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- CONTENIDO DINÁMICO -->
+      <main class="content-body">
+        {% block contenido %}{% endblock %}
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="app-footer">
+        <p>© 2026 <strong>MDsUCN</strong> — Plataforma Profesional de Gestión</p>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <!-- SCRIPT BASE -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Reloj Nicaragua
+      function actualizarHoraNicaragua() {
+        const opciones = {
+          timeZone: 'America/Managua',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        };
+        const hora = new Intl.DateTimeFormat('es-NI', opciones).format(new Date());
+        const clockEl = document.getElementById('clock-nicaragua');
+        if (clockEl) clockEl.innerText = hora;
+      }
+      setInterval(actualizarHoraNicaragua, 1000);
+      actualizarHoraNicaragua();
+
+      // 2. Control del Sidebar
+      const sidebar = document.getElementById('sidebar');
+      const toggleSidebarBtn = document.getElementById('toggleSidebar');
+      const mobileToggleBtn = document.getElementById('mobileToggle');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+      if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        sidebar?.classList.add('collapsed');
+      }
+
+      if (toggleSidebarBtn && sidebar) {
+        toggleSidebarBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('collapsed');
+          const isCollapsed = sidebar.classList.contains('collapsed');
+          localStorage.setItem('sidebar-collapsed', isCollapsed);
+        });
+      }
+
+      function toggleMobileSidebar() {
+        sidebar?.classList.toggle('mobile-open');
+        sidebarOverlay?.classList.toggle('show');
+      }
+
+      if (mobileToggleBtn) mobileToggleBtn.addEventListener('click', toggleMobileSidebar);
+      if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileSidebar);
+
+      // 3. Dropdown Notificaciones
+      const notifBtn = document.getElementById('notifBtn');
+      const notifDropdown = document.getElementById('notifDropdown');
+
+      if (notifBtn && notifDropdown) {
+        notifBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          notifDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!notifDropdown.contains(e.target)) {
+            notifDropdown.classList.remove('show');
+          }
+        });
+      }
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

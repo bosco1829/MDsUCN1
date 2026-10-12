@@ -1,0 +1,114 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Crear Cuenta | MDsUCN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Fuentes y Iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'appOne/css/registro.css' %}">
+</head>
+
+<body>
+
+    <div class="registro-wrapper">
+        <!-- Elementos de fondo flotantes para efecto moderno -->
+        <div class="blob-bg blob-1"></div>
+        <div class="blob-bg blob-2"></div>
+
+        <div class="registro-container">
+
+            <!-- PANEL IZQUIERDO (Branding & Experience) -->
+            <div class="registro-left">
+                <div class="brand-content">
+                    <div class="badge-tag">
+                        <i class="ri-user-shared-line"></i>
+                        <span>Registro Seguro</span>
+                    </div>
+                    <h1>Vamos a Registrarte</h1>
+                    <p>Crea tu cuenta institucional para solicitar dispositivos y gestionar tus préstamos de manera eficiente.</p>
+                </div>
+                <div class="left-footer">
+                    <p>&copy; 2026 UCN. Todos los derechos reservados.</p>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO (Formulario de Registro) -->
+            <div class="registro-right">
+                <div class="registro-box">
+
+                    <div class="box-header">
+                        <h2>Crear Cuenta</h2>
+                        <p>Completa los datos para dar de alta tu perfil</p>
+                    </div>
+
+                    <form method="POST" class="registro-form">
+                        {% csrf_token %}
+
+                        <div class="form-grid">
+                            {{ form.as_p }}
+                        </div>
+
+                        <button type="submit" class="btn-registro">
+                            <span>Registrarse ahora</span>
+                            <i class="ri-arrow-right-line"></i>
+                        </button>
+                    </form>
+
+                    <div class="extras">
+                        <a href="{% url 'login' %}">
+                            <i class="ri-arrow-left-line"></i> ¿Ya tienes cuenta? <strong>Inicia sesión</strong>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript para alternar la visibilidad de la contraseña -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Busca todos los inputs de contraseña renderizados por Django
+            const passwordInputs = document.querySelectorAll('.form-grid input[type="password"]');
+
+            passwordInputs.forEach(input => {
+                // Crea un contenedor envolvente relativo
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('password-input-wrapper');
+                
+                // Inserta el contenedor antes del input y mete el input dentro
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+
+                // Crea el botón/ícono de ojo
+                const toggleIcon = document.createElement('i');
+                toggleIcon.classList.add('ri-eye-off-line', 'toggle-password');
+                toggleIcon.setAttribute('title', 'Mostrar contraseña');
+                
+                // Agrega el ícono dentro del wrapper
+                wrapper.appendChild(toggleIcon);
+
+                // Evento click para alternar el tipo de input y el ícono
+                toggleIcon.addEventListener('click', function () {
+                    const isPassword = input.getAttribute('type') === 'password';
+                    
+                    input.setAttribute('type', isPassword ? 'text' : 'password');
+                    
+                    // Cambia la clase del ícono
+                    this.classList.toggle('ri-eye-off-line', !isPassword);
+                    this.classList.toggle('ri-eye-line', isPassword);
+                    this.setAttribute('title', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

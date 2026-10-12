@@ -1,0 +1,305 @@
+/* =========================================================
+   ESTILOS GENERALES & HEADER SECCIÓN
+   ========================================================= */
+.header-pagina {
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titulo-seccion {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--primary, #1e293b);
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.subtitulo-seccion {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #64748b);
+    margin-top: 4px;
+}
+
+/* =========================================================
+   GRID DE TARJETAS ULTRA PRO
+   ========================================================= */
+.galeria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.card-pro {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.card-pro:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary, #6366f1);
+}
+
+/* =========================================================
+   ZONA CLICKEABLE E IMAGEN CON OVERLAY
+   ========================================================= */
+.card-body-click {
+    cursor: pointer;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 190px;
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.card-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.card-pro:hover .card-image-wrapper img {
+    transform: scale(1.08);
+}
+
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+.card-pro:hover .image-overlay {
+    opacity: 1;
+}
+
+.btn-quick-view {
+    background: #ffffff;
+    color: #0f172a;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* =========================================================
+   BADGES DE ESTADO
+   ========================================================= */
+.badge-status {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(8px);
+}
+
+.badge-status.pendiente {
+    background: rgba(254, 240, 138, 0.95);
+    color: #854d0e;
+}
+
+.badge-status.aprobado {
+    background: rgba(167, 243, 208, 0.95);
+    color: #065f46;
+}
+
+/* =========================================================
+   TEXTOS Y DETALLES
+   ========================================================= */
+.card-details {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main, #0f172a);
+    margin: 0 0 12px 0;
+}
+
+.card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.meta-item {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.meta-item i {
+    width: 16px;
+    color: var(--primary, #6366f1);
+}
+
+.meta-item strong {
+    color: var(--text-main, #334155);
+}
+
+/* =========================================================
+   BOTONES ACCIÓN ADMIN
+   ========================================================= */
+.card-actions-admin {
+    display: flex;
+    gap: 8px;
+    padding: 12px 18px 18px;
+    border-top: 1px solid var(--border, #f1f5f9);
+    background: #fafafa;
+}
+
+.btn-action {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-action.edit {
+    background: var(--primary, #4f46e5);
+    color: #ffffff;
+    flex: 1;
+}
+
+.btn-action.edit:hover {
+    background: #4338ca;
+}
+
+.form-delete {
+    margin: 0;
+}
+
+.btn-action.delete {
+    background: #fee2e2;
+    color: #ef4444;
+    padding: 8px 12px;
+}
+
+.btn-action.delete:hover {
+    background: #fca5a5;
+    color: #991b1b;
+}
+
+/* =========================================================
+   BOTÓN FLOTANTE Y NADA QUE MOSTRAR
+   ========================================================= */
+.btn-floating-add {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 56px;
+    height: 56px;
+    background: var(--primary, #4f46e5);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
+    transition: transform 0.25s ease, background-color 0.25s ease;
+    z-index: 100;
+    text-decoration: none;
+}
+
+.btn-floating-add:hover {
+    transform: scale(1.1) rotate(90deg);
+    background: #4338ca;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px dashed #e2e8f0;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+/* =========================================================
+   MODALES (ESTILO BACKDROP ULTRA PRO)
+   ========================================================= */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.modal-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-container {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.25s ease;
+    overflow: hidden;
+}
+
+.modal-backdrop.active .modal-container {
+    transform: translateY(0) scale(1);
+}
+
+.modal-sm { width: 450px; max-width: 90vw; }
+.modal-lg { width: 1000px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
