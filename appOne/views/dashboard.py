@@ -23,11 +23,13 @@ def dashboard(request):
 
 @login_required
 def layaut_Principal(request):
-    # Conteos generales para las tarjetas
-    total_usuarios = Usuario.objects.filter(is_active=True).count()
-    prestamos_activos = Prestamo.objects.filter(estado=Prestamo.ESTADO_APROBADO).count()
+    # Las cifras de préstamos deben coincidir con las solicitudes visibles para cada rol.
+    admin = es_administrador(request.user)
+    prestamos_visibles = Prestamo.objects.all() if admin else Prestamo.objects.filter(usuario=request.user)
+    total_usuarios = Usuario.objects.filter(is_active=True).count() if admin else 0
+    prestamos_activos = prestamos_visibles.filter(estado=Prestamo.ESTADO_APROBADO).count()
     dispositivos_disponibles = Dispositivo.objects.filter(estado=Dispositivo.ESTADO_DISPONIBLE).count()
-    pendientes_count = Prestamo.objects.filter(estado=Prestamo.ESTADO_PENDIENTE).count()
+    pendientes_count = prestamos_visibles.filter(estado=Prestamo.ESTADO_PENDIENTE).count()
 
     # Variables para el Topbar y Notificaciones
     prestamos_pendientes_admin = []
