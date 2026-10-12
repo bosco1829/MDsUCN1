@@ -1,0 +1,35 @@
+{% extends "appOne/dashboard.html" %}
+{% load static %}
+{% block title %}Actividades | MDsUCN{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'appOne/css/actividades.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+{% endblock %}
+{% block contenido %}
+<section class="actividades-page">
+  <header class="act-header"><div><span class="act-kicker">GESTIÓN INSTITUCIONAL</span><h1>Actividades universitarias</h1><p>Planifica eventos dentro y fuera del campus, fechas y equipos necesarios.</p></div>{% if puede_editar %}<a class="act-btn act-btn-primary" href="#actividad-form"><i class="ri-add-line"></i> Nueva actividad</a>{% endif %}</header>
+  <div class="act-tabs"><a class="{% if not tipo_actual %}selected{% endif %}" href="{% url 'actividades' %}">Todas</a><a class="{% if tipo_actual == 'interna' %}selected{% endif %}" href="?tipo=interna">Dentro de la universidad</a><a class="{% if tipo_actual == 'externa' %}selected{% endif %}" href="?tipo=externa">Fuera de la universidad</a></div>
+  <div class="act-layout"><div class="act-panel"><div class="act-panel-head"><h2><i class="ri-calendar-2-line"></i> Calendario de actividades</h2><span class="act-legend"><b></b> Interna &nbsp; <b class="blue"></b> Externa</span></div><div id="calendario-actividades"></div></div>
+  {% if puede_editar %}<div class="act-panel" id="actividad-form"><div class="act-panel-head"><h2>{% if editar %}Editar actividad{% else %}Programar actividad{% endif %}</h2></div><form method="post" class="act-form">{% csrf_token %}{% if editar %}<input type="hidden" name="actividad_id" value="{{ editar.pk }}">{% endif %}{% for field in form %}<div class="act-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == 'equipos' %}<small>Ctrl + clic para seleccionar varios equipos. Esta planificación no reserva automáticamente los dispositivos.</small>{% endif %}{% for error in field.errors %}<small class="act-error">{{ error }}</small>{% endfor %}</div>{% endfor %}{% for error in form.non_field_errors %}<p class="act-error">{{ error }}</p>{% endfor %}<button class="act-btn act-btn-primary" type="submit">Guardar actividad</button>{% if editar %}<a class="act-btn act-btn-ghost" href="{% url 'actividades' %}">Cancelar edición</a>{% endif %}</form></div>{% endif %}</div>
+  <div class="act-panel act-list"><div class="act-panel-head"><h2>Actividades registradas</h2><span>{{ actividades|length }} actividades</span></div><div class="act-table-scroll"><table><thead><tr><th>Actividad</th><th>Tipo / lugar</th><th>Fecha y horario</th><th>Equipos necesarios</th><th>Responsable</th><th>Estado</th>{% if puede_editar %}<th>Acciones</th>{% endif %}</tr></thead><tbody>{% for a in actividades %}<tr><td><strong>{{ a.titulo }}</strong><small>{{ a.descripcion|truncatechars:90 }}</small></td><td>{{ a.get_tipo_display }}<small>{{ a.lugar }}</small></td><td>{{ a.inicio|date:"d/m/Y H:i" }}<small>Hasta {{ a.fin|date:"d/m/Y H:i" }}</small></td><td>{% for d in a.equipos.all %}<span class="act-device">{{ d.nombre_dispositivo }}</span>{% empty %}<span class="act-muted">Sin equipos</span>{% endfor %}</td><td>{{ a.responsable }}</td><td><span class="act-status">{{ a.get_estado_display }}</span></td>{% if puede_editar %}<td><a class="act-action" href="?editar={{ a.pk }}#actividad-form">Editar</a><form method="post" action="{% url 'eliminar_actividad' a.pk %}" onsubmit="return confirm('¿Eliminar esta actividad?');">{% csrf_token %}<button class="act-action danger" type="submit">Eliminar</button></form></td>{% endif %}</tr>{% empty %}<tr><td colspan="7" class="act-empty">Todavía no hay actividades programadas.</td></tr>{% endfor %}</tbody></table></div></div>
+</section>
+{% endblock %}
+{% block extra_js %}<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const nodo = document.getElementById('calendario-actividades');
+  if (!nodo || !window.FullCalendar) return;
+  const calendar = new FullCalendar.Calendar(nodo, {
+    initialView: 'dayGridMonth', locale: 'es', height: 'auto', firstDay: 1,
+    headerToolbar: {left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth'},
+    buttonText: {today: 'Hoy', month: 'Mes', week: 'Semana', list: 'Agenda'},
+    events: '{% url "api_actividades" %}{% if tipo_actual %}?tipo={{ tipo_actual }}{% endif %}',
+    eventClick: function(info) {
+      const e = info.event, p = e.extendedProps;
+      alert([e.title, p.tipo, 'Lugar: ' + p.lugar, 'Responsable: ' + p.responsable,
+        'Estado: ' + p.estado, 'Equipos: ' + (p.equipos.join(', ') || 'Ninguno'),
+        p.descripcion].filter(Boolean).join('\n'));
+    }
+  });
+  calendar.render();
+});
+</script>{% endblock %}
