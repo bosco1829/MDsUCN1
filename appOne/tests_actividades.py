@@ -28,13 +28,20 @@ class ActividadesTests(TestCase):
         response = self.client.get(reverse('actividades'))
         self.assertEqual(response.status_code, 302)
 
-    def test_docente_puede_ver_pero_no_crear(self):
+    def test_docente_puede_ver_y_crear_actividad_externa(self):
         self.client.force_login(self.docente)
         response = self.client.get(reverse('actividades'))
         self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse('actividades'), {'titulo': 'No permitida'})
+        inicio = timezone.localtime(timezone.now() + timedelta(days=3)).replace(second=0, microsecond=0)
+        response = self.client.post(reverse('actividades'), {
+            'titulo': 'Visita de campo', 'tipo': 'externa', 'lugar': 'Centro cultural',
+            'responsable': 'Docente', 'inicio': inicio.strftime('%Y-%m-%dT%H:%M'),
+            'fin': (inicio + timedelta(hours=2)).strftime('%Y-%m-%dT%H:%M'),
+            'estado': 'planificada',
+        })
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(Actividad.objects.exists())
+        self.assertEqual(Actividad.objects.count(), 1)
+        self.assertEqual(Actividad.objects.first().creado_por, self.docente)
 
     def test_admin_puede_crear_y_api_muestra_evento(self):
         self.client.force_login(self.admin)
@@ -66,3 +73,36 @@ class ActividadesTests(TestCase):
             'estado': 'planificada',
         })
         self.assertFalse(Actividad.objects.exists())
+
+    def test_docente_no_puede_crear_actividad_interna(self):
+        self.client.force_login(self.docente)
+        inicio = timezone.localtime(timezone.now() + timedelta(days=4)).replace(second=0, microsecond=0)
+        response = self.client.post(reverse('actividades'), {
+            'titulo': 'Evento interno', 'tipo': 'interna', 'lugar': 'Campus',
+            'responsable': 'Docente', 'inicio': inicio.strftime('%Y-%m-%dT%H:%M'),
+            'fin': (inicio + timedelta(hours=2)).strftime('%Y-%m-%dT%H:%M'),
+            'estado': 'planificada',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Actividad.objects.exists())
+
+    def test_docente_no_puede_editar_actividad_ajena(self):
+        inicio = timezone.now() + timedelta(days=4)
+        actividad = Actividad.objects.create(
+            titulo='Actividad externa de admin', tipo='externa', lugar='Centro',
+            responsable='Admin', inicio=inicio, fin=inicio + timedelta(hours=2),
+            creado_por=self.admin,
+        )
+        self.client.force_login(self.docente)
+        response = self.client.post(reverse('actividades'), {
+            'actividad_id': actividad.pk, 'titulo': 'Alterada', 'tipo': 'externa',
+            'lugar': 'Centro', 'responsable': 'Docente',
+            'inicio': timezone.localtime(inicio).strftime('%Y-%m-%dT%H:%M'),
+            'fin': timezone.localtime(inicio + timedelta(hours=2)).strftime('%Y-%m-%dT%H:%M'),
+            'estado': 'planificada',
+        })
+        self.assertEqual(response.status_code, 403)
+        actividad.refresh_from_db()
+        self.assertEqual(actividad.titulo, 'Actividad externa de admin')
+        response = self.client.post(reverse('eliminar_actividad', args=[actividad.pk]))
+        self.assertEqual(response.status_code, 403)
