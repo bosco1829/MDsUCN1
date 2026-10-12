@@ -82,7 +82,8 @@
     <!-- MAIN CONTENT GRID -->
     <section class="dashboard-content">
 
-        <!-- GRÁFICO -->
+        <!-- GRÁFICO: visible solo para administradores -->
+        {% if request.user.rol == 'Admin' or request.user.is_superuser %}
         <article class="content-card chart-card">
             <div class="card-header">
                 <div>
@@ -95,6 +96,8 @@
                 <canvas id="pieChart"></canvas>
             </div>
         </article>
+
+        {% endif %}
 
         <!-- TABLA ÚLTIMOS PRÉSTAMOS -->
         <article class="content-card table-card">
