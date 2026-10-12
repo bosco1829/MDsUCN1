@@ -1,0 +1,23 @@
+{% extends "appOne/dashboard.html" %}
+{% block title %}Restablecer contraseña | MDsUCN{% endblock %}
+{% block contenido %}
+<style>
+.pwd-wrap{max-width:670px;margin:25px auto;padding:28px;background:white;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 8px 28px rgba(15,23,42,.06)}
+.pwd-wrap h1{font-size:25px;margin:0 0 8px}.pwd-wrap p{color:#64748b;margin-bottom:23px}
+.pwd-form{display:grid;gap:16px}.pwd-field label{display:block;font-weight:700;margin-bottom:7px}.pwd-input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fafafa}
+.pwd-help{font-size:12px;color:#64748b}.pwd-error{color:#b91c1c;font-size:13px;margin:5px 0}.pwd-btn{background:#00894e;color:white;padding:12px 20px;border:0;border-radius:10px;cursor:pointer;font-weight:700}
+.pwd-back{margin-left:12px;text-decoration:none;color:#475569}.pwd-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.pwd-head i{font-size:30px;color:#059669}.pwd-form ul{padding-left:20px}.pwd-form li{margin-bottom:5px}
+</style>
+<div class="pwd-wrap">
+<div class="pwd-head"><i class="ri-shield-keyhole-line"></i><div><h1>Restablecer contraseña</h1><p>Usuario: <strong>{{ usuario_objetivo.nombre_completo }}</strong> ({{ usuario_objetivo.correo_institucional }})</p></div></div>
+<p>La contraseña anterior no se mostrará ni se necesita para este restablecimiento. Comunica la nueva contraseña al usuario por un medio seguro.</p>
+<form class="pwd-form" method="post">{% csrf_token %}
+{% for field in form %}<div class="pwd-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+{% for error in field.errors %}<div class="pwd-error">{{ error }}</div>{% endfor %}
+{% if field.help_text %}<div class="pwd-help">{{ field.help_text|safe }}</div>{% endif %}</div>{% endfor %}
+{% for error in form.non_field_errors %}<p class="pwd-error">{{ error }}</p>{% endfor %}
+<div><button class="pwd-btn" type="submit"><i class="ri-save-line"></i> Guardar nueva contraseña</button><a class="pwd-back" href="{% url 'panel_usuarios' %}">Cancelar</a></div>
+</form>
+</div>
+{% endblock %}
