@@ -54,6 +54,12 @@
           <span>Dispositivos</span>
         </a>
 
+        <a href="{% url 'actividades' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'actividades' %}active{% endif %}">
+          <i class="ri-calendar-event-line"></i>
+          <span>Actividades</span>
+        </a>
+
         {% if request.user.rol == "Admin" or request.user.is_superuser %}
         <div class="nav-section-title">ADMINISTRACIÓN</div>
 
