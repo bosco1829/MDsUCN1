@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from appOne.models import Actividad, Dispositivo
@@ -19,8 +19,12 @@ class ActividadForm(forms.ModelForm):
             'equipos': forms.SelectMultiple(attrs={'size': '5'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, administrador=True, **kwargs):
         super().__init__(*args, **kwargs)
+        if not administrador:
+            self.fields['tipo'].choices = [('externa', 'Fuera de la universidad')]
+            self.fields['tipo'].initial = 'externa'
+            self.fields['estado'].choices = [('planificada', 'Planificada')]
         self.fields['inicio'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['fin'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['equipos'].queryset = Dispositivo.objects.exclude(
@@ -32,20 +36,25 @@ class ActividadForm(forms.ModelForm):
 
 @login_required
 def actividades(request):
-    puede_editar = es_administrador(request.user)
+    administrador = es_administrador(request.user)
+    puede_editar = True
     actividad_editar = None
-    if request.GET.get('editar') and puede_editar:
+    if request.GET.get('editar'):
         actividad_editar = get_object_or_404(Actividad, pk=request.GET['editar'])
-    form = ActividadForm(instance=actividad_editar)
+        if not administrador and (actividad_editar.creado_por_id != request.user.pk or actividad_editar.tipo != 'externa'):
+            return HttpResponseForbidden('Solo puedes editar tus propias actividades externas.')
+    form = ActividadForm(instance=actividad_editar, administrador=administrador)
 
     if request.method == 'POST':
-        if not puede_editar:
-            messages.error(request, 'No tienes permiso para administrar actividades.')
-            return redirect('actividades')
+        # Validar permisos en el servidor, no solo en el formulario.
         pk = request.POST.get('actividad_id')
         objeto = get_object_or_404(Actividad, pk=pk) if pk else None
-        form = ActividadForm(request.POST, instance=objeto)
+        if objeto and not administrador and (objeto.creado_por_id != request.user.pk or objeto.tipo != 'externa'):
+            return HttpResponseForbidden('No puedes modificar esta actividad.')
+        form = ActividadForm(request.POST, instance=objeto, administrador=administrador)
         if form.is_valid():
+            if not administrador and (form.cleaned_data['tipo'] != 'externa' or form.cleaned_data['estado'] != 'planificada'):
+                return HttpResponseForbidden('Solo puedes solicitar actividades externas planificadas.')
             actividad = form.save(commit=False)
             if not actividad.creado_por_id:
                 actividad.creado_por = request.user
@@ -59,19 +68,20 @@ def actividades(request):
     registros = Actividad.objects.prefetch_related('equipos').all()
     if tipo in ('interna', 'externa'):
         registros = registros.filter(tipo=tipo)
+    for actividad in registros:
+        actividad.puede_gestionar = administrador or (actividad.tipo == 'externa' and actividad.creado_por_id == request.user.pk)
     return render(request, 'appOne/actividades.html', {
         'actividades': registros, 'form': form, 'editar': actividad_editar,
-        'puede_editar': puede_editar, 'tipo_actual': tipo,
+        'puede_editar': puede_editar, 'es_administrador': administrador, 'tipo_actual': tipo,
     })
 
 
 @login_required
 @require_POST
 def eliminar_actividad(request, pk):
-    if not es_administrador(request.user):
-        messages.error(request, 'No tienes permiso para eliminar actividades.')
-        return redirect('actividades')
     actividad = get_object_or_404(Actividad, pk=pk)
+    if not es_administrador(request.user) and (actividad.tipo != 'externa' or actividad.creado_por_id != request.user.pk):
+        return HttpResponseForbidden('No puedes eliminar esta actividad.')
     registrar_auditoria(request, 'ELIMINAR', 'Actividad', actividad.pk, actividad.titulo)
     actividad.delete()
     messages.success(request, 'Actividad eliminada.')
