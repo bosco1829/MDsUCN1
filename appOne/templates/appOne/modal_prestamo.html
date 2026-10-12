@@ -138,10 +138,20 @@
 
                 <input type="hidden" name="dispositivo_id" value="{{ dispositivo.id }}">
 
+                <!-- PASO 1: SELECCIONAR FECHA ANTES DE COMPLETAR DATOS -->
+                <h4 style="margin:0 0 8px;color:#14532d;">Paso 1. Selecciona la fecha de uso</h4>
+                    <div class="grupo" style="margin-bottom: 15px;">
+                        <label for="fecha_uso" style="display: block; margin-bottom: 5px; font-weight: 600;">Fecha de
+                            uso <span style="color:red;">*</span></label>
+                        <input type="date" id="fecha_uso" name="fecha_uso" value="{{ fecha_seleccionada }}"
+                            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;" required>
+                    </div>
+
                 <p id="avisoFechaPrestamo" style="color:#64748b;font-size:.87rem;margin:0 0 14px;" {% if fecha_seleccionada %}hidden{% endif %}>
                     <i class="fa-solid fa-calendar-day"></i> Primero selecciona la fecha de uso. Después podrás completar el motivo y los horarios.
                 </p>
 
+                <h4 style="margin:15px 0 8px;color:#14532d;">Paso 2. Completa tu solicitud</h4>
                 <!-- MOTIVO -->
                 <div class="grupo" style="margin-bottom: 15px;">
                     <label for="motivo" style="display: block; margin-bottom: 5px; font-weight: 600;">Motivo del
@@ -151,15 +161,8 @@
                         required {% if not fecha_seleccionada %}disabled{% endif %}></textarea>
                 </div>
 
-                <!-- FECHA Y HORAS -->
+                <!-- HORARIOS DESPUÉS DE SELECCIONAR FECHA -->
                 <div class="fila" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <div class="grupo" style="flex: 1;">
-                        <label for="fecha_uso" style="display: block; margin-bottom: 5px; font-weight: 600;">Fecha de
-                            uso <span style="color:red;">*</span></label>
-                        <input type="date" id="fecha_uso" name="fecha_uso" value="{{ fecha_seleccionada }}"
-                            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;" required>
-                    </div>
-
                     <div class="grupo" style="flex: 1;">
                         <label for="hora_inicio" style="display: block; margin-bottom: 5px; font-weight: 600;">Hora
                             inicio <span style="color:red;">*</span></label>
