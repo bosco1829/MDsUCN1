@@ -13,3 +13,5 @@ from .auditoria import bitacora_auditoria
 from .reportes import reportes
 from .calendario import calendario_reservas, api_reservas_eventos
 from .actividades import actividades, api_actividades, eliminar_actividad
+
+from .contrasenas import cambiar_mi_contrasena, admin_cambiar_contrasena
