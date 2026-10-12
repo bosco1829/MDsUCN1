@@ -81,6 +81,12 @@
 
         <div class="nav-section-title">SISTEMA</div>
 
+        <a href="{% url 'cambiar_mi_contrasena' %}"
+          class="nav-item {% if request.resolver_match.url_name == 'cambiar_mi_contrasena' %}active{% endif %}">
+          <i class="ri-lock-password-line"></i>
+          <span>Mi contraseña</span>
+        </a>
+
         <a href="{% url 'reportes' %}"
           class="nav-item {% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
           <i class="ri-bar-chart-grouped-line"></i>
