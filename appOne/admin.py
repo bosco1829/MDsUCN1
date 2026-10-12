@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuario, Dispositivo, Prestamo
+from .models import Usuario, Dispositivo, Prestamo, Actividad
 
 
 @admin.register(Usuario)
@@ -27,3 +27,10 @@ class PrestamoAdmin(admin.ModelAdmin):
     list_display = ('dispositivo', 'usuario', 'fecha_uso', 'hora_inicio', 'hora_entrega', 'estado')
     list_filter = ('estado', 'fecha_uso')
     search_fields = ('dispositivo__nombre_dispositivo', 'usuario__nombre_completo')
+
+@admin.register(Actividad)
+class ActividadAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'tipo', 'lugar', 'responsable', 'inicio', 'fin', 'estado')
+    list_filter = ('tipo', 'estado', 'inicio')
+    search_fields = ('titulo', 'lugar', 'responsable')
+    filter_horizontal = ('equipos',)
