@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
 
-from appOne.models import Prestamo
+from appOne.models import Prestamo, Actividad
 from .utils import es_administrador
 
 
@@ -64,4 +64,31 @@ def api_reservas_eventos(request):
             'borderColor': colores.get(p.estado, '#1874c8'),
             'extendedProps': props,
         })
+    # Una actividad puede ocupar varios equipos a la vez: cada uno figura en el calendario.
+    actividades = Actividad.objects.prefetch_related('equipos')
+    if not admin:
+        actividades = actividades.filter(creado_por=request.user)
+    for actividad in actividades.exclude(estado='cancelada'):
+        for equipo in actividad.equipos.all():
+            eventos.append({
+                'id': f'actividad-{actividad.pk}-equipo-{equipo.pk}',
+                'title': f'{equipo.nombre_dispositivo} · Actividad: {actividad.titulo}',
+                'start': actividad.inicio.isoformat(),
+                'end': actividad.fin.isoformat(),
+                'backgroundColor': '#9333ea',
+                'borderColor': '#9333ea',
+                'extendedProps': {
+                    'estado': actividad.get_estado_display(),
+                    'dispositivo': equipo.nombre_dispositivo,
+                    'codigo_inventario': equipo.codigo_inventario,
+                    'marca': equipo.marca,
+                    'usuario': actividad.responsable,
+                    'motivo': actividad.descripcion or actividad.titulo,
+                    'fecha_uso': timezone.localtime(actividad.inicio).strftime('%d/%m/%Y'),
+                    'hora_inicio': timezone.localtime(actividad.inicio).strftime('%H:%M'),
+                    'hora_entrega': timezone.localtime(actividad.fin).strftime('%H:%M'),
+                    'fecha_solicitud': timezone.localtime(actividad.creado_en).strftime('%d/%m/%Y %H:%M'),
+                    'tipo_registro': 'Actividad universitaria',
+                },
+            })
     return JsonResponse(eventos, safe=False)
