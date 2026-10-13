@@ -1,4 +1,8 @@
 from django import forms
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from appOne.disponibilidad import actividades_en_rango, prestamos_en_rango
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden
@@ -18,6 +22,24 @@ class ActividadForm(forms.ModelForm):
             'fin': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={'type': 'datetime-local'}),
             'equipos': forms.SelectMultiple(attrs={'size': '5'}),
         }
+
+    def clean(self):
+        data = super().clean()
+        inicio, fin = data.get('inicio'), data.get('fin')
+        equipos = data.get('equipos')
+        if inicio and fin and equipos is not None:
+            if fin <= inicio:
+                self.add_error('fin', 'La fecha de fin debe ser posterior al inicio.')
+            elif data.get('estado') in ('planificada', 'en_curso'):
+                ids = [equipo.pk for equipo in equipos]
+                if ids:
+                    otras = actividades_en_rango(ids, inicio, fin, self.instance.pk).first()
+                    prestamo = prestamos_en_rango(ids, inicio, fin).first()
+                    if otras:
+                        self.add_error('equipos', f'El equipo ya está asignado a la actividad "{otras.titulo}" en ese horario.')
+                    if prestamo:
+                        self.add_error('equipos', f'Hay un préstamo pendiente o aprobado para {prestamo.dispositivo.nombre_dispositivo} en ese horario.')
+        return data
 
     def __init__(self, *args, administrador=True, **kwargs):
         super().__init__(*args, **kwargs)
