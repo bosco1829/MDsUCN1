@@ -101,7 +101,9 @@
                             <tr style="border-bottom: 1px solid #edf2f7;">
                                 <td style="padding: 8px 12px;"><strong>{{ slot.rango }}</strong></td>
                                 <td style="padding: 8px 12px;">
-                                    {% if slot.ocupado %}
+                                    {% if slot.actividad %}
+                                    <span class="estado" style="color:#9a3412;background:#ffedd5;padding:3px 8px;border-radius:7px;font-weight:700;">🟠 Ocupado por actividad</span>
+                                    {% elif slot.ocupado %}
                                     <span class="estado {{ slot.reserva.estado|lower }}"
                                         style="padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">
                                         {{ slot.reserva.get_estado_display }}
@@ -112,7 +114,10 @@
                                     {% endif %}
                                 </td>
                                 <td style="padding: 8px 12px; color: #334155;">
-                                    {% if slot.ocupado %}
+                                    {% if slot.actividad %}
+                                    <strong>{{ slot.actividad.titulo }}</strong>
+                                    <small style="color:#64748b;">{{ slot.actividad.inicio|date:"d/m/Y H:i" }} – {{ slot.actividad.fin|date:"d/m/Y H:i" }}</small>
+                                    {% elif slot.ocupado %}
                                     <strong>{{ slot.reserva.usuario.nombre_completo }}</strong>
                                     <small style="color: #64748b;">({{ slot.reserva.hora_inicio|time:"H:i" }} - {{ slot.reserva.hora_entrega|time:"H:i" }})</small>
                                     {% else %}
