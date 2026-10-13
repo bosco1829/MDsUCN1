@@ -100,7 +100,8 @@ document.addEventListener('DOMContentLoaded', function () {
     events: '{% url "api_actividades" %}{% if tipo_actual %}?tipo={{ tipo_actual }}{% endif %}',
     eventClick: function(info) {
       const e = info.event, p = e.extendedProps;
-      alert([e.title, p.tipo, 'Lugar: ' + p.lugar, 'Responsable: ' + p.responsable,
+      const fechaHora = new Intl.DateTimeFormat('es-NI', {dateStyle:'medium', timeStyle:'short'});
+      alert([e.title, p.tipo, 'Inicio: ' + fechaHora.format(e.start), 'Fin: ' + (e.end ? fechaHora.format(e.end) : '—'), 'Lugar: ' + p.lugar, 'Responsable: ' + p.responsable,
         'Estado: ' + p.estado, 'Equipos: ' + (p.equipos.join(', ') || 'Ninguno'),
         p.descripcion].filter(Boolean).join('\n'));
     }
