@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 
 from appOne.models import Usuario, Dispositivo, Prestamo, BitacoraAuditoria, Notificacion
+from appOne.disponibilidad import ocupacion_por_hora
 from .utils import es_administrador, registrar_auditoria
 
 # ============================
@@ -47,11 +48,13 @@ def modal_prestamo(request, id):
                 reserva_coincidente = r
                 break
         
+        actividad_coincidente = ocupacion_por_hora(dispositivo, fecha_dt, h_inicio, h_fin)
         horarios_tabla.append({
+            'actividad': actividad_coincidente,
             'rango': f"{h:02d}:00 - {h+1:02d}:00",
             'hora_inicio': h_inicio,
             'hora_fin': h_fin,
-            'ocupado': reserva_coincidente is not None,
+            'ocupado': reserva_coincidente is not None or actividad_coincidente is not None,
             'reserva': reserva_coincidente
         })
 
