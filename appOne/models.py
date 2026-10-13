@@ -205,6 +205,25 @@ class Prestamo(models.Model):
             if prestamos_conflictivos.exists():
                 raise ValidationError("El equipo ya cuenta con una reserva o solicitud activa en el horario seleccionado.")
 
+        # Las actividades planificadas o en curso también reservan el equipo.
+        if self.dispositivo_id and self.fecha_uso and self.hora_inicio and self.hora_entrega:
+            from datetime import datetime
+            from django.utils import timezone
+            zona = timezone.get_current_timezone()
+            inicio = timezone.make_aware(datetime.combine(self.fecha_uso, self.hora_inicio), zona)
+            fin = timezone.make_aware(datetime.combine(self.fecha_uso, self.hora_entrega), zona)
+            if fin > inicio:
+                actividad = Actividad.objects.filter(
+                    equipos__pk=self.dispositivo_id,
+                    estado__in=['planificada', 'en_curso'],
+                    inicio__lt=fin,
+                    fin__gt=inicio,
+                ).first()
+                if actividad:
+                    raise ValidationError(
+                        f'El equipo está ocupado por la actividad "{actividad.titulo}" en el horario solicitado.'
+                    )
+
     def __str__(self):
         return f"{self.dispositivo.nombre_dispositivo} - {self.usuario.nombre_completo} ({self.estado})"
 
